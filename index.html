@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Star Shepherd</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23161b42'/%3E%3Cpolygon points='32,8 38,24 56,24 41,34 47,52 32,41 17,52 23,34 8,24 26,24' fill='%23ffd97d'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-shell">
+    <canvas id="game-canvas" aria-label="Star Shepherd game canvas"></canvas>
+
+    <!-- Top HUD (visible during play and pause) -->
+    <header id="hud" class="hud hidden" aria-live="polite">
+      <div class="hud-left">
+        <div class="hud-pill" title="Score">
+          <span class="hud-label">SCORE</span>
+          <span id="hud-score" class="hud-value">0</span>
+        </div>
+        <div class="hud-pill combo-pill" id="hud-combo-wrap" title="Combo Multiplier">
+          <span class="hud-label">COMBO</span>
+          <span id="hud-combo" class="hud-value">x1</span>
+        </div>
+        <div class="hud-pill hud-wave-pill" title="Current Wave & Constellation">
+          <span id="hud-wave" class="hud-label">WAVE 1</span>
+          <span id="hud-constellation" class="hud-subvalue">Corona</span>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div id="hud-powerups" class="hud-powerups" aria-label="Active power-ups"></div>
+        <div id="hud-lives" class="hud-lives" aria-label="Lives remaining"></div>
+        <button id="btn-mute" class="icon-btn" type="button" title="Toggle Sound (M)" aria-label="Toggle Sound">
+          <span id="mute-icon" class="svg-icon" aria-hidden="true"></span>
+        </button>
+        <button id="btn-pause" class="icon-btn" type="button" title="Pause (P / Esc)" aria-label="Pause Game">
+          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <rect x="6" y="4" width="4" height="16" rx="1.5"></rect>
+            <rect x="14" y="4" width="4" height="16" rx="1.5"></rect>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Boss Health Bar -->
+    <div id="boss-bar" class="boss-bar hidden" aria-live="polite">
+      <div class="boss-bar-header">
+        <span id="boss-name">TEMPEST SOVEREIGN</span>
+        <span id="boss-hp-text">8 / 8</span>
+      </div>
+      <div class="boss-bar-track">
+        <div id="boss-bar-fill" class="boss-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Wave / Constellation Banner -->
+    <div id="wave-banner" class="wave-banner hidden" aria-live="polite">
+      <div id="wave-banner-kicker" class="banner-kicker">WAVE 1 · GOLDEN DUSK</div>
+      <div id="wave-banner-title" class="banner-title">Corona Borealis</div>
+      <div id="wave-banner-sub" class="banner-sub">Shepherd 5 stars back to the heavens</div>
+    </div>
+
+    <!-- Title Screen Overlay -->
+    <section id="screen-title" class="overlay screen-title" role="dialog" aria-modal="true" aria-labelledby="title-heading">
+      <div class="panel title-panel">
+        <div class="jam-badge">GMT JAM #1 · FROM THE HEAVENS</div>
+        <h1 id="title-heading" class="game-title">STAR SHEPHERD</h1>
+        <p class="game-tagline">
+          The night sky is unraveling. Glide as a little cloud and bounce falling stars, wishes, and moonbeams back into their constellations.
+        </p>
+
+        <div class="highscore-strip">
+          <div class="hs-item">
+            <span class="hs-label">HIGH SCORE</span>
+            <span id="title-highscore" class="hs-value">0</span>
+          </div>
+          <div class="hs-divider"></div>
+          <div class="hs-item">
+            <span class="hs-label">BEST WAVE</span>
+            <span id="title-bestwave" class="hs-value">1</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-play" class="btn btn-primary" type="button">Play</button>
+          <button id="btn-howto" class="btn btn-secondary" type="button">How to Play</button>
+          <button id="btn-title-mute" class="btn btn-ghost" type="button">Sound: On</button>
+        </div>
+
+        <p class="controls-hint">
+          Move: Mouse · Touch Drag · Arrow Keys / WASD &nbsp;|&nbsp; Gust: Space / Click &nbsp;|&nbsp; Pause: P
+        </p>
+        <p class="credit-line">Created by Zhiqiang Luan</p>
+      </div>
+    </section>
+
+    <!-- How to Play Overlay -->
+    <section id="screen-howto" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="howto-heading">
+      <div class="panel howto-panel">
+        <h2 id="howto-heading" class="panel-title">How to Play</h2>
+        <div class="howto-grid">
+          <div class="howto-card">
+            <h3>Shepherd the Sky</h3>
+            <p>Catch falling <strong>Stars</strong>, <strong>Wishes</strong>, and <strong>Moonbeams</strong> on your cloud to bounce them upward into the unlit constellation nodes.</p>
+          </div>
+          <div class="howto-card">
+            <h3>Chain Combos</h3>
+            <p>Keep bouncing celestial light without letting stars slip past to climb up to an <strong>x8</strong> score multiplier. Complete every constellation to advance waves.</p>
+          </div>
+          <div class="howto-card">
+            <h3>Survive the Storm</h3>
+            <p>Dodge <strong>Lightning</strong> telegraph beams and <strong>Storm Clouds</strong>. Shatter <strong>Heavy Meteors</strong> by bouncing rising stars into them or using a <strong>Cloud Gust</strong> (Space / Click) before they hit you or the village!</p>
+          </div>
+          <div class="howto-card">
+            <h3>Celestial Power-Ups</h3>
+            <p>Catch glowing orbs for <strong>Wide Cloud</strong>, <strong>Slow Time</strong>, and <strong>Starlight Shield</strong>. Survive the <strong>Tempest Sovereign</strong> boss every 5th wave!</p>
+          </div>
+        </div>
+
+        <div class="controls-table">
+          <div><kbd>Mouse</kbd> / <kbd>Touch</kbd> Move Cloud</div>
+          <div><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> Move Cloud</div>
+          <div><kbd>Space</kbd> / <kbd>Click</kbd> Cloud Gust</div>
+          <div><kbd>P</kbd> / <kbd>Esc</kbd> Pause &nbsp; <kbd>M</kbd> Mute</div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-howto-play" class="btn btn-primary" type="button">Start Playing</button>
+          <button id="btn-howto-back" class="btn btn-secondary" type="button">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pause Overlay -->
+    <section id="screen-pause" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-heading">
+      <div class="panel compact-panel">
+        <h2 id="pause-heading" class="panel-title">Paused</h2>
+        <p class="panel-subtitle">The heavens wait quietly above.</p>
+        <div class="btn-col">
+          <button id="btn-resume" class="btn btn-primary" type="button">Resume</button>
+          <button id="btn-pause-howto" class="btn btn-secondary" type="button">How to Play</button>
+          <button id="btn-pause-restart" class="btn btn-secondary" type="button">Restart</button>
+          <button id="btn-pause-title" class="btn btn-ghost" type="button">Title Screen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game Over Overlay -->
+    <section id="screen-gameover" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="gameover-heading">
+      <div class="panel gameover-panel">
+        <div id="gameover-newbest" class="new-best-badge hidden">NEW HIGH SCORE!</div>
+        <h2 id="gameover-heading" class="panel-title">The Sky Rests</h2>
+        <p id="gameover-quote" class="panel-subtitle">You guided stray starlight home through the storm.</p>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">SCORE</span>
+            <span id="go-score" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">HIGH SCORE</span>
+            <span id="go-highscore" class="stat-value">0</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">WAVE REACHED</span>
+            <span id="go-wave" class="stat-value">1</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">CONSTELLATIONS</span>
+            <span id="go-constellations" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-restart" class="btn btn-primary" type="button">Play Again</button>
+          <button id="btn-go-title" class="btn btn-secondary" type="button">Title Screen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mobile Gust Button (shown only on coarse pointers during play) -->
+    <button id="btn-mobile-gust" class="mobile-gust hidden" type="button" aria-label="Trigger Cloud Gust">
+      GUST
+    </button>
+  </div>
+
+  <script src="js/constellations.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
